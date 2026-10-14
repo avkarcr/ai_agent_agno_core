@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agno Core</title><style>
+:root{font-family:system-ui,sans-serif;color-scheme:dark}body{background:#101621;color:#f1f3f8;max-width:1040px;margin:28px auto;padding:0 20px}
+h1{margin-bottom:4px}h2{font-size:18px}p,small{color:#abb6c9}
+main{display:grid;grid-template-columns:1fr 1fr;gap:16px}section{background:#1c2838;border:1px solid #354052;border-radius:12px;padding:18px;min-width:0}
+.wide{grid-column:1/-1}.row{display:flex;gap:12px;align-items:center;margin:12px 0}
+button{border:0;background:#647cff;color:white;border-radius:7px;padding:10px;cursor:pointer}
+input{min-width:0;flex:1;background:#111c2c;color:white;border:1px solid #43536b;border-radius:7px;padding:10px}
+article{border-top:1px solid #334255;padding:10px 0;overflow-wrap:anywhere}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}a{color:#a7c3ff}
+.error{color:#ffb1a4}.ok{color:#86d5b1}
+@media(max-width:760px){main{grid-template-columns:1fr}.wide{grid-column:1}}
+</style></head><body>
+<h1>Agno Core</h1>
+<p>Мониторинг источников, события, уведомления и локальный ИИ-анализ</p>
+<div class="row"><button id="run">Проверить сейчас</button><span id="status" role="status"></span></div>
+<main><section><h2>Источники</h2><div id="watches">Загрузка…</div></section>
+<section><h2>Спросить Agno</h2>
+<p>Агент читает последние события из локальной базы. Для ответа требуется Ollama или OpenAI API.</p>
+<form id="ask"><div class="row"><input id="question" placeholder="Что изменилось?" maxlength="2000" required>
+<button>Спросить</button></div></form><pre id="answer"></pre>
+</section><section class="wide"><h2>История событий</h2><div id="events">Загрузка…</div></section></main>
+<p><small>Локальный интерфейс без авторизации. Не публикуйте порт в интернет. <a href="/docs">Документация API</a></small></p>
+<script>
+const el=id=>document.getElementById(id);
+const add=(parent,tag,text)=>{const node=document.createElement(tag);node.textContent=text;parent.appendChild(node);return node};
+async function get(url,options){const r=await fetch(url,options);if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
+async function refresh(){
+ try{
+ const [watches,events]=await Promise.all([get('/api/watches'),get('/api/events')]);
+ const w=el('watches');w.replaceChildren();
+ watches.forEach(x=>{const p=add(w,'article','');add(p,'strong',x.title);
+ const st=add(p,'div',x.error||('Проверено: '+(x.checked_at||'ещё не было')));st.className=x.error?'error':'ok';
+ add(p,'small',x.kind+' · '+x.id)});
+ if(!watches.length)add(w,'p','Источников нет');
+ const e=el('events');e.replaceChildren();
+ if(!events.length)add(e,'p','Событий пока нет: первая проверка создаёт базовое состояние.');
+ events.forEach(x=>{const p=add(e,'article','');add(p,'strong',x.title);
+ add(p,'div',x.analysis||x.detail);const a=add(p,'a',x.source_url);a.href=x.source_url;
+ a.rel='noopener noreferrer';a.target='_blank';add(p,'small',' · '+x.created_at+' UTC · '+x.delivery)});
+ }catch(err){el('status').textContent='Ошибка чтения: '+err.message}
+}
+el('run').onclick=async()=>{el('run').disabled=true;el('status').textContent='Проверка…';
+ try{const x=await get('/api/run',{method:'POST'});el('status').textContent='Новых событий: '+x.new_events+'; ошибок: '+Object.keys(x.errors).length;await refresh()}
+ catch(err){el('status').textContent='Ошибка: '+err.message}finally{el('run').disabled=false}};
+el('ask').onsubmit=async(e)=>{e.preventDefault();el('answer').textContent='Запрос выполняется…';
+ try{const x=await get('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},
+ body:JSON.stringify({question:el('question').value})});el('answer').textContent=x.answer}
+ catch(err){el('answer').textContent='Ошибка LLM: '+err.message}};
+refresh();setInterval(refresh,60000);
+</script></body></html>

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "python-news",
+    "title": "Python project news",
+    "kind": "rss",
+    "url": "https://www.python.org/blogs/rss/",
+    "max_items": 20
+  },
+  {
+    "id": "seoul-temperature",
+    "title": "Seoul temperature (°C)",
+    "kind": "json",
+    "url": "https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9780&current=temperature_2m",
+    "json_path": "current.temperature_2m",
+    "min_delta": 2.0
+  }
+]

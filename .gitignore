@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Agno Core runtime files
+.local/
+watchers.json
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
