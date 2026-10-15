@@ -58,8 +58,6 @@ git clone https://github.com/avkarcr/ai_agent_agno_core.git
 cd ai_agent_agno_core
 ```
 
-> Если изменения ещё в pull request, сначала откройте/слейте PR на GitHub либо переключитесь на указанную в PR ветку: `git fetch origin && git switch feat/agno-monitoring-core`.
-
 ### Шаг 2. Установить Python-зависимости
 
 ```bash
